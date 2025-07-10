@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Encrypted Link Site</title>
+<style>
+  body, html { margin:0; padding:0; background:yellow; color:black; font-family:monospace; overflow:hidden; user-select:none; }
+  #firstPhase, #whitePhase, #finalPhase {
+    position:absolute; top:0; left:0; width:100%; height:100%;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+  }
+  #firstPhase { background:yellow; }
+  #whitePhase { background:gray; color:black; display:none; }
+  #finalPhase { background:black; color:white; display:none; font-size:20px; }
+  #scpCode { font-size:20px; animation:glitch-flicker 1.5s infinite; text-align:center; margin:20px; }
+  #keyHint { font-size:14px; margin-top:5px; }
+  @keyframes glitch-flicker { 0%,100%{opacity:1;} 50%{opacity:0.6;} }
+  .char-button { position:absolute; font-size:16px; background:none; border:none; cursor:pointer; color:black; animation:floatUp linear infinite; user-select:none; }
+  .random-symbol { position:absolute; font-size:14px; color:black; opacity:0.3; animation:floatUp linear infinite; pointer-events:none; user-select:none; }
+  @keyframes floatUp { from{transform:translateY(100vh);} to{transform:translateY(-100vh);} }
+  #flash { position:fixed; top:0; left:0; width:100%; height:100%; background:none; pointer-events:none; z-index:1000; }
+</style>
+</head>
+<body>
+<audio id="bgMusic" autoplay loop>
+  <source src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_6f1391e9f4.mp3?filename=horror-dark-ambient-ambient-112196.mp3" type="audio/mpeg">
+</audio>
+<div id="firstPhase">
+  <div id="scpCode">01001110 01001111 01010010 01001101 01000001 01010101</div>
+  <div id="keyHint">HERE IS YOUR KEY</div>
+  <input type="text" id="codeInput" placeholder="Enter code" />
+  <button onclick="checkFirstCode()">ENTER</button>
+</div>
+<div id="whitePhase">
+  <div style="position:absolute;top:10px;">HINT: COLOR WILL SHOW THE CORRECT PATH</div>
+</div>
+<div id="finalPhase"></div>
+<div id="flash"></div>
+<script>
+const correctFirstCode = 'NORMAU';
+const hiddenCode = 'DECADENCE';
+let currentIndex = 0;
+const clickSound = new Audio('https://www.myinstants.com/media/sounds/click.mp3');
+const errorSound = new Audio('https://www.myinstants.com/media/sounds/error_1.mp3');
+
+window.addEventListener('load', () => {
+  const bgMusic = document.getElementById('bgMusic');
+  bgMusic.volume = 1.0;
+  bgMusic.play().catch(e => console.log('Autoplay blocked'));
+});
+
+function flashScreen(color) {
+  const flash = document.getElementById('flash');
+  flash.style.background = color;
+  setTimeout(() => flash.style.background = 'none', 100);
+}
+
+function checkFirstCode() {
+  clickSound.play();
+  const input = document.getElementById('codeInput').value.trim().toUpperCase();
+  if (input === correctFirstCode) {
+    flashScreen('rgba(255,255,0,0.3)');
+    document.getElementById('firstPhase').style.display = 'none';
+    startWhitePhase();
+  } else {
+    errorSound.play();
+    flashScreen('rgba(255,0,0,0.5)');
+    alert('Incorrect code!');
+  }
+}
+
+function startWhitePhase() {
+  document.getElementById('whitePhase').style.display = 'flex';
+  const container = document.getElementById('whitePhase');
+  const symbols = '!@#$%^&*()_+-=[]{}/?<>|~`✔✖✪✿★☆✦✧♛♚♞♟♜♝♙♔♕♖♗♘♤♧♡♢あいうえおアイウエオ漢字한글';
+  for (let i=0; i<hiddenCode.length; i++) {
+    const btn = document.createElement('button');
+    btn.className = 'char-button';
+    btn.innerText = hiddenCode[i];
+    btn.style.left = Math.random()*90+'%';
+    btn.style.top = Math.random()*90+'%';
+    btn.style.animationDuration = (12+Math.random()*4)+'s';
+    btn.onclick = () => clickLetter(btn, hiddenCode[i]);
+    container.appendChild(btn);
+  }
+  for (let i=0; i<200; i++) {
+    const sym = document.createElement('div');
+    sym.className = 'random-symbol';
+    sym.innerText = symbols[Math.floor(Math.random()*symbols.length)];
+    sym.style.left = Math.random()*100+'%';
+    sym.style.top = Math.random()*100+'%';
+    sym.style.animationDuration = (6+Math.random()*6)+'s';
+    container.appendChild(sym);
+  }
+}
+
+function clickLetter(button, letter) {
+  clickSound.play();
+  if (letter === hiddenCode[currentIndex]) {
+    currentIndex++;
+    button.style.animationPlayState = 'paused';
+    button.style.color = 'gold';
+    flashScreen('rgba(255,255,0,0.3)');
+    if (currentIndex === hiddenCode.length) {
+      document.getElementById('whitePhase').style.display = 'none';
+      startFinalPhase();
+    }
+  } else {
+    errorSound.play();
+    flashScreen('rgba(255,0,0,0.5)');
+    currentIndex = 0;
+    document.querySelectorAll('.char-button').forEach(btn => {
+      btn.style.animationPlayState = 'running';
+      btn.style.color = 'black';
+    });
+    alert('Wrong letter! Sequence reset.');
+  }
+}
+
+function startFinalPhase() {
+  document.getElementById('finalPhase').style.display = 'flex';
+  const text = 'I am no longer here. I am already gone. Do not look for me.';
+  let i = 0;
+  const target = document.getElementById('finalPhase');
+  function type() {
+    if (i < text.length) {
+      target.innerText += text[i];
+      i++;
+      setTimeout(type, 50);
+    }
+  }
+  type();
+}
+</script>
+</body>
+</html>
